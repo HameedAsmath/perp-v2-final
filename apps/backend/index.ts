@@ -1,12 +1,10 @@
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import routes from "./routes";
-
-dotenv.config();
+import { startBackendConsumer } from "./redis/consumer";
 
 const port = process.env.PORT || 4000;
-
+startBackendConsumer();
 const app = express();
 
 app.use(cors());
