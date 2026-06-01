@@ -1,0 +1,49 @@
+export type EngineResponse = {
+  ok: boolean;
+  data?: Record<string, unknown>;
+  error?: string;
+};
+
+export type ToBackend = {
+  correlationId: string;
+  response: string;
+};
+
+export type ToEngineStreamFields = {
+  correlationId: string;
+  messageType: string;
+  [key: string]: string;
+};
+
+export type ToEngine =
+  | {
+      messageType: "reset";
+    }
+  | {
+      messageType: "create_user";
+      userId: string;
+      initialBalance: string;
+    }
+  | {
+      messageType: "place_order";
+      userId: string;
+      symbol: string;
+      side: "long" | "short";
+      type: "market" | "limit";
+      quantity: string;
+      price: string;
+      leverage: string;
+      postOnly: string;
+    }
+  | {
+      messageType: "get_orderbook";
+      symbol: string;
+    }
+  | {
+      messageType: "get_balance";
+      userId: string;
+    }
+  | {
+      messageType: "get_positions";
+      userId: string;
+    };
