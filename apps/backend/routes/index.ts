@@ -5,6 +5,6 @@ import exchangeRoutes from "./exchange.routes";
 const router = Router();
 
 router.use("/auth", authRoutes);
-router.use("/exchange", exchangeRoutes);
+router.use("/api", exchangeRoutes);
 
 export default router;

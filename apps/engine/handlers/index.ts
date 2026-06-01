@@ -1,6 +1,7 @@
 import type { EngineResponse, ToEngine } from "types";
 import { resetAll } from "../state/reset";
-import { createUser } from "../state/users";
+import { createUser, getBalanceView } from "../state/users";
+import { placeOrder } from "../state/orderbook";
 
 export async function dispatch(
   message: ToEngine & { correlationId: string },
@@ -17,6 +18,25 @@ export async function dispatch(
       return {
         ok: true,
         data: { ok: true, userId: message.userId },
+      };
+    case "place_order":
+      return {
+        ok: true,
+        data: placeOrder({
+          userId: message.userId,
+          symbol: message.symbol,
+          side: message.side,
+          type: message.type,
+          quantity: Number(message.quantity),
+          price: Number(message.price),
+          leverage: Number(message.leverage),
+          postOnly: message.postOnly === "true",
+        }),
+      };
+    case "get_balance":
+      return {
+        ok: true,
+        data: getBalanceView(message.userId),
       };
     default:
       return {

@@ -36,7 +36,7 @@ export async function startBackendConsumer() {
       console.log("no reponse in backend");
       continue;
     }
-    console.log("response in backend", response);
+    console.log("response in backend", response[0]?.messages[0]?.message);
     for (const batch of response) {
       // incase of many streams
       for (const messages of batch.messages) {

@@ -54,7 +54,10 @@ while (true) {
       } catch (error) {
         await reply(message.correlationId, {
           ok: false,
-          error: "failed to dispatch message",
+          error:
+            error instanceof Error
+              ? error.message
+              : "failed to dispatch message",
         });
       }
       await reader.xAck(STREAM, GROUP, messages.id);

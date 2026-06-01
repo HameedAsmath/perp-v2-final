@@ -57,6 +57,10 @@ export async function loopback(message: ToEngine) {
     }, 10000);
     createPending(correlationId, {
       resolve: (result) => {
+        if (!result.ok) {
+          reject(new Error(result.error ?? "Engine error"));
+          return;
+        }
         resolve(result.data);
       },
       reject,
