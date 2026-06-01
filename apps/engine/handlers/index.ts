@@ -1,12 +1,13 @@
 import type { EngineResponse, ToEngine } from "types";
-import { resetExchange, createUser } from "../state/exchange";
+import { resetAll } from "../state/reset";
+import { createUser } from "../state/users";
 
 export async function dispatch(
   message: ToEngine & { correlationId: string },
 ): Promise<EngineResponse> {
   switch (message.messageType) {
     case "reset":
-      resetExchange();
+      resetAll();
       return {
         ok: true,
         data: { ok: true },
