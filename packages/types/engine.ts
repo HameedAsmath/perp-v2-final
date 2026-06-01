@@ -46,4 +46,20 @@ export type ToEngine =
   | {
       messageType: "get_positions";
       userId: string;
-    };
+    }
+  | {
+      messageType: "update_mark_price";
+      symbol: string;
+      markPrice: string;
+      timestamp: string;
+      runLiquidation: string; // "true" | "false" from redis
+    }
+  | {
+      messageType: "apply_funding";
+      symbol: string;
+      rate: string;
+      timestamp: string;
+      runLiquidation: string;
+    }
+  | { messageType: "get_insurance_fund"; symbol: string }
+  | { messageType: "get_adl_events" };

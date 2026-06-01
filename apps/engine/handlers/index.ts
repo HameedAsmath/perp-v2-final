@@ -2,6 +2,10 @@ import type { EngineResponse, ToEngine } from "types";
 import { resetAll } from "../state/reset";
 import { createUser, getBalanceView } from "../state/users";
 import { placeOrder } from "../state/orderbook";
+import { updateMarkPrice } from "./markPrice";
+import { applyFunding } from "./funding";
+import { getInsuranceFundView } from "../state/insurance";
+import { getAdlEventsView } from "../state/adl";
 
 export async function dispatch(
   message: ToEngine & { correlationId: string },
@@ -37,6 +41,34 @@ export async function dispatch(
       return {
         ok: true,
         data: getBalanceView(message.userId),
+      };
+    case "update_mark_price":
+      return {
+        ok: true,
+        data: updateMarkPrice(
+          message.symbol,
+          Number(message.markPrice),
+          message.runLiquidation === "true",
+        ),
+      };
+    case "apply_funding":
+      return {
+        ok: true,
+        data: applyFunding(
+          message.symbol,
+          Number(message.rate),
+          message.runLiquidation === "true",
+        ),
+      };
+    case "get_insurance_fund":
+      return {
+        ok: true,
+        data: getInsuranceFundView(message.symbol),
+      };
+    case "get_adl_events":
+      return {
+        ok: true,
+        data: getAdlEventsView(),
       };
     default:
       return {
