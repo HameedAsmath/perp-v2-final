@@ -9,6 +9,7 @@ import {
   updateMarkPrice,
   getInsuranceFund,
   getAdlEvents,
+  getOrderBook,
 } from "../controllers/exchange.controller";
 
 const exchangeRouter = Router();
@@ -22,5 +23,6 @@ exchangeRouter.post("/mark-price", updateMarkPrice);
 exchangeRouter.post("/funding", applyFunding);
 exchangeRouter.get("/insurance-fund/:symbol", getInsuranceFund);
 exchangeRouter.get("/adl-events", getAdlEvents);
+exchangeRouter.get("/orderbook/:symbol", getOrderBook);
 
 export default exchangeRouter;

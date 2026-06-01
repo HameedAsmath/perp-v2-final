@@ -128,3 +128,18 @@ export async function getAdlEvents(_req: Request, res: Response) {
     res.status(500).json({ error: "Failed to get ADL events" });
   }
 }
+
+export async function getOrderBook(req: Request, res: Response) {
+  const symbol = req.params.symbol as string;
+  try {
+    const data = await loopback({
+      messageType: "get_orderbook",
+      symbol,
+    });
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Failed to get orderbook",
+    });
+  }
+}

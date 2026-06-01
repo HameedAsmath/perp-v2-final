@@ -1,11 +1,12 @@
 import type { EngineResponse, ToEngine } from "types";
 import { resetAll } from "../state/reset";
 import { createUser, getBalanceView } from "../state/users";
-import { placeOrder } from "../state/orderbook";
+import { getOrderBookView, placeOrder } from "../state/orderbook";
 import { updateMarkPrice } from "./markPrice";
 import { applyFunding } from "./funding";
 import { getInsuranceFundView } from "../state/insurance";
 import { getAdlEventsView } from "../state/adl";
+import { getPositionsView } from "../state/positions";
 
 export async function dispatch(
   message: ToEngine & { correlationId: string },
@@ -70,10 +71,20 @@ export async function dispatch(
         ok: true,
         data: getAdlEventsView(),
       };
+    case "get_orderbook":
+      return {
+        ok: true,
+        data: getOrderBookView(message.symbol),
+      };
+    case "get_positions":
+      return {
+        ok: true,
+        data: getPositionsView(message.userId),
+      };
     default:
       return {
         ok: false,
-        error: `Unknown messageType: ${message.messageType}`,
+        error: `unknown dispatch method`,
       };
   }
 }

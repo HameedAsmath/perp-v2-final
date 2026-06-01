@@ -165,6 +165,7 @@ function applyMakerFill(
     maker.leverage,
   );
 }
+
 function applyTakerFill(
   input: PlaceOrderInput,
   fillQty: number,
@@ -181,6 +182,7 @@ function applyTakerFill(
     input.leverage ?? 1,
   );
 }
+
 function finalizeMarketOrder(
   user: UserAccount,
   initialLock: number,

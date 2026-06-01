@@ -88,3 +88,25 @@ export function getAllPositionsForSymbol(symbol: string) {
 export function removePosition(userId: string, symbol: string) {
   positions.get(userId)?.delete(symbol);
 }
+
+export function getPositionEquityTotals(
+  userId: string,
+  getMark: (symbol: string) => number,
+) {
+  const userPos = positions.get(userId);
+  if (!userPos) return { positionMargin: 0, unrealizedPnl: 0 };
+
+  let positionMargin = 0;
+  let unrealizedPnl = 0;
+
+  for (const p of userPos.values()) {
+    const mark = getMark(p.symbol);
+    positionMargin += p.margin;
+    unrealizedPnl +=
+      p.side === "long"
+        ? (mark - p.averageEntryPrice) * p.quantity
+        : (p.averageEntryPrice - mark) * p.quantity;
+  }
+
+  return { positionMargin, unrealizedPnl };
+}

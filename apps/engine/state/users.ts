@@ -1,3 +1,6 @@
+import { getPositionEquityTotals } from "./positions";
+import { getMarkPrice } from "./markPrices";
+
 export type UserAccount = {
   availableBalance: number;
   lockedMargin: number;
@@ -27,12 +30,19 @@ export function getUser(userId: string) {
 
 export function getBalanceView(userId: string) {
   const user = getUser(userId);
+  const { positionMargin, unrealizedPnl } = getPositionEquityTotals(
+    userId,
+    getMarkPrice,
+  );
+  const totalEquity =
+    user.availableBalance + user.lockedMargin + positionMargin + unrealizedPnl;
+
   return {
     userId,
     availableBalance: user.availableBalance,
     lockedMargin: user.lockedMargin,
     realizedPnl: user.realizedPnl,
-    totalEquity: user.availableBalance + user.lockedMargin + user.realizedPnl,
+    totalEquity,
   };
 }
 
