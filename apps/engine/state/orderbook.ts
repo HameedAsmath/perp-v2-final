@@ -237,8 +237,13 @@ function finalizeLimitOrder(
     });
   }
 
-  // adjust: total initial lock was for full qty; filled portion lock moves to position
-  user.lockedMargin -= marginUsed; // position margin already moved in applyTakerFill
+  const remainderLock =
+    remaining > 0
+      ? requiredMargin(input.price, remaining, input.leverage ?? 1)
+      : 0;
+
+  // Replace locked slice: full initial lock → only remainder on book
+  user.lockedMargin = user.lockedMargin - initialLock + remainderLock;
 
   let status =
     remaining === 0 && fills.length > 0
