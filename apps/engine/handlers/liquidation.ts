@@ -2,6 +2,9 @@ import { getMarkPrice } from "../state/markPrices";
 import { getAllPositionsForSymbol } from "../state/positions";
 import type { Position } from "../state/positions";
 import { runAdl } from "../handlers/adl";
+import { getUser } from "../state/users";
+import { removePosition } from "../state/positions";
+import { debitInsurance } from "../state/insurance";
 
 const MAINTENANCE_MARGIN_RATE = 0.005;
 
@@ -30,11 +33,6 @@ function shouldLiquidate(
   if (side === "long") return markPrice <= liqPrice;
   return markPrice >= liqPrice;
 }
-
-import { getUser } from "../state/users";
-import { removePosition } from "../state/positions";
-import { debitInsurance } from "../state/insurance";
-// keep your existing imports...
 
 function liquidateUserPosition(
   userId: string,
