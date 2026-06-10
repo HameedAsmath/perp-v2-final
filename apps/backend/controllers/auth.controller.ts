@@ -3,6 +3,7 @@ import type { ZodType } from "zod";
 import { prisma } from "database";
 import { signToken } from "../utils/jwt";
 import { signinSchema, signupSchema } from "../validators/auth.schema";
+import { loopback } from "../redis/loopback";
 
 function omitPassword<T extends { password: string }>(
   user: T,
@@ -43,6 +44,13 @@ export async function signup(req: Request, res: Response) {
 
     const user = await prisma.user.create({
       data: { username, email, password: hashedPassword },
+    });
+
+    const INITIAL_BALANCE = 10000;
+    await loopback({
+      messageType: "create_user",
+      userId: user.id,
+      initialBalance: String(INITIAL_BALANCE),
     });
 
     const token = signToken(user.id);

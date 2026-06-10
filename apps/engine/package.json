@@ -15,6 +15,7 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "redis": "^6.0.0",
-    "types": "workspace:*"
+    "types": "workspace:*",
+    "database": "workspace:*"
   }
 }

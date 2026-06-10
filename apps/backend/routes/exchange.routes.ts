@@ -10,19 +10,25 @@ import {
   getInsuranceFund,
   getAdlEvents,
   getOrderBook,
+  getOrders,
+  getOrderById,
 } from "../controllers/exchange.controller";
+import { authMiddleware } from "../middleware/auth";
 
 const exchangeRouter = Router();
 
-exchangeRouter.post("/reset", resetExchange);
-exchangeRouter.post("/users", createUser);
-exchangeRouter.post("/orders", placeOrder);
-exchangeRouter.get("/users/:userId/balance", getUserBalance);
-exchangeRouter.get("/users/:userId/positions", getUserPositions);
-exchangeRouter.post("/mark-price", updateMarkPrice);
-exchangeRouter.post("/funding", applyFunding);
-exchangeRouter.get("/insurance-fund/:symbol", getInsuranceFund);
-exchangeRouter.get("/adl-events", getAdlEvents);
-exchangeRouter.get("/orderbook/:symbol", getOrderBook);
+exchangeRouter.get("/orderbook/:symbol", getOrderBook); // orderbook is public
+
+exchangeRouter.post("/reset", authMiddleware, resetExchange);
+exchangeRouter.post("/orders", authMiddleware, placeOrder);
+exchangeRouter.get("/me/balance", authMiddleware, getUserBalance);
+exchangeRouter.get("/me/positions", authMiddleware, getUserPositions);
+exchangeRouter.get("/me/orders", authMiddleware, getOrders);
+exchangeRouter.get("/me/orders/:id", authMiddleware, getOrderById);
+exchangeRouter.post("/mark-price", authMiddleware, updateMarkPrice);
+exchangeRouter.post("/funding", authMiddleware, applyFunding);
+exchangeRouter.get("/insurance-fund/:symbol", authMiddleware, getInsuranceFund);
+exchangeRouter.get("/adl-events", authMiddleware, getAdlEvents);
+exchangeRouter.get("/orderbook/:symbol", authMiddleware, getOrderBook);
 
 export default exchangeRouter;

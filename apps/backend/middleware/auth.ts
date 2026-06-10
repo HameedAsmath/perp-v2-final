@@ -20,6 +20,7 @@ export function authMiddleware(
   try {
     const payload = verifyToken(token);
     if (payload.userId) {
+      req.userId = payload.userId;
       next();
       return;
     }

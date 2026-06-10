@@ -13,8 +13,8 @@ datasource db {
 }
 
 enum OrderSide {
-  buy
-  sell
+  long
+  short
 }
 
 enum OrderType {
@@ -23,17 +23,11 @@ enum OrderType {
 }
 
 enum OrderStatus {
-  open
-  fulfilled
+  resting
+  filled
   cancelled
-  partiallyFilled
+  partially_filled
   rejected
-}
-
-enum PositionStatus {
-  open
-  closed
-  liquidated
 }
 
 enum FillRole {
@@ -83,15 +77,18 @@ model Order {
   type     OrderType
   status   OrderStatus
 
-  qty          BigInt
-  price        BigInt?
-  filledQty    BigInt  @default(0)
-  remainingQty BigInt
+  qty          Float
+  price        Float?
+  filledQty    Float  @default(0)
+  remainingQty Float
 
   leverage  Int      @default(1)
   slippage  Int // max allowed slippage for market orders
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  postOnly        Boolean @default(false)
+  rejectionReason String?
 
   user   User   @relation(fields: [userId], references: [id])
   market Market @relation(fields: [marketId], references: [id])

@@ -1,24 +1,30 @@
 import { openOrAddPosition } from "./positions";
 import { getUser, requiredMargin, type UserAccount } from "./users";
-
-export type PlaceOrderInput = {
-  userId: string;
-  symbol: string;
-  side: "long" | "short";
-  type: "limit" | "market";
-  quantity: number;
-  price: number;
-  leverage?: number;
-  postOnly?: boolean;
-};
+import {
+  persistRejectedOrder,
+  persistMakerFill,
+  persistPlacedOrder,
+} from "../db/orders";
 
 export type Side = "long" | "short";
+export type OrderType = "limit" | "market";
 export type Status =
   | "resting"
   | "filled"
   | "partially_filled"
   | "cancelled"
   | "rejected";
+
+export type PlaceOrderInput = {
+  userId: string;
+  symbol: string;
+  side: Side;
+  type: OrderType;
+  quantity: number;
+  price: number;
+  leverage?: number;
+  postOnly?: boolean;
+};
 
 export type RestingOrder = {
   orderId: string;
@@ -274,7 +280,9 @@ function rejected(orderId: string, qty: number, reason: string): OrderResponse {
   };
 }
 
-export function placeOrder(input: PlaceOrderInput): OrderResponse {
+export async function placeOrder(
+  input: PlaceOrderInput,
+): Promise<OrderResponse> {
   const orderId = crypto.randomUUID();
   const user = getUser(input.userId);
   const leverage = input.leverage ?? 1;
@@ -286,6 +294,11 @@ export function placeOrder(input: PlaceOrderInput): OrderResponse {
   if (input.postOnly && input.type === "limit" && input.price != null) {
     // post only true means user wants that order to be sit on orderbook
     if (wouldCross(input.symbol, input.side, input.price)) {
+      await persistRejectedOrder(
+        orderId,
+        input,
+        "post-only order would take liquidity",
+      ); // add it in the orders table
       return rejected(
         orderId,
         input.quantity,
@@ -295,6 +308,7 @@ export function placeOrder(input: PlaceOrderInput): OrderResponse {
   }
   // Step 2: pre-trade margin check
   if (user.availableBalance < initialLock) {
+    await persistRejectedOrder(orderId, input, "insufficient margin");
     return rejected(orderId, input.quantity, "insufficient margin");
   }
 
@@ -326,7 +340,7 @@ export function placeOrder(input: PlaceOrderInput): OrderResponse {
     ) {
       user.availableBalance += initialLock;
       user.lockedMargin -= initialLock;
-
+      await persistRejectedOrder(orderId, input, "insufficient margin"); // add it in the orders table
       return rejected(orderId, input.quantity, "insufficient margin");
     }
 
@@ -339,6 +353,7 @@ export function placeOrder(input: PlaceOrderInput): OrderResponse {
       takerUserId: input.userId,
     });
     applyMakerFill(maker, fillQty, fillPrice); // update maker book + maker user margin + maker position
+    await persistMakerFill(maker.orderId, maker.quantity, fillQty); // change the orders table
     applyTakerFill(input, fillQty, fillPrice, fillMargin);
     marginUsed += fillMargin;
     remaining -= fillQty;
@@ -348,26 +363,28 @@ export function placeOrder(input: PlaceOrderInput): OrderResponse {
     }
   }
 
-  // Step 5: finalize margin
-  if (input.type === "market") {
-    return finalizeMarketOrder(
-      user,
-      initialLock,
-      marginUsed,
-      remaining,
-      fills,
-      orderId,
-      input,
-    );
-  } else {
-    return finalizeLimitOrder(
-      user,
-      initialLock,
-      marginUsed,
-      remaining,
-      fills,
-      orderId,
-      input,
-    );
-  }
+  // Step 5: finalize margin + persist placed order
+  const response =
+    input.type === "market"
+      ? finalizeMarketOrder(
+          user,
+          initialLock,
+          marginUsed,
+          remaining,
+          fills,
+          orderId,
+          input,
+        )
+      : finalizeLimitOrder(
+          user,
+          initialLock,
+          marginUsed,
+          remaining,
+          fills,
+          orderId,
+          input,
+        );
+
+  await persistPlacedOrder(orderId, input, response);
+  return response;
 }

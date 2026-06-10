@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { loopback } from "../redis/loopback";
+import { prisma, serializeOrder } from "database";
 
 export async function resetExchange(req: Request, res: Response) {
   try {
@@ -46,7 +47,7 @@ export async function placeOrder(req: Request, res: Response) {
 }
 
 export async function getUserBalance(req: Request, res: Response) {
-  const userId = req.params.userId as string;
+  const userId = req.userId as string;
   try {
     const data = await loopback({
       messageType: "get_balance",
@@ -59,7 +60,7 @@ export async function getUserBalance(req: Request, res: Response) {
 }
 
 export async function getUserPositions(req: Request, res: Response) {
-  const userId = req.params.userId as string;
+  const userId = req.userId as string;
   try {
     const data = await loopback({
       messageType: "get_positions",
@@ -142,4 +143,24 @@ export async function getOrderBook(req: Request, res: Response) {
       error: error instanceof Error ? error.message : "Failed to get orderbook",
     });
   }
+}
+
+export async function getOrders(req: Request, res: Response) {
+  const userId = req.userId as string;
+  if (!userId) return res.status(401).json({ error: "unauthorized" });
+  const orders = await prisma.order.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+  });
+  res.json({ orders: orders.map(serializeOrder) });
+}
+
+export async function getOrderById(req: Request, res: Response) {
+  const userId = req.userId as string;
+  if (!userId) return res.status(401).json({ error: "unauthorized" });
+  const order = await prisma.order.findFirst({
+    where: { id: req.params.id as string, userId },
+  });
+  if (!order) return res.status(404).json({ error: "order not found" });
+  res.json({ order: serializeOrder(order) });
 }

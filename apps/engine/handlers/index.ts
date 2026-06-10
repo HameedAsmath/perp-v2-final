@@ -7,6 +7,7 @@ import { applyFunding } from "./funding";
 import { getInsuranceFundView } from "../state/insurance";
 import { getAdlEventsView } from "../state/adl";
 import { getPositionsView } from "../state/positions";
+import { resetOrders } from "../db/orders";
 
 export async function dispatch(
   message: ToEngine & { correlationId: string },
@@ -14,6 +15,7 @@ export async function dispatch(
   switch (message.messageType) {
     case "reset":
       resetAll();
+      await resetOrders();
       return {
         ok: true,
         data: { ok: true },
@@ -27,7 +29,7 @@ export async function dispatch(
     case "place_order":
       return {
         ok: true,
-        data: placeOrder({
+        data: await placeOrder({
           userId: message.userId,
           symbol: message.symbol,
           side: message.side,
