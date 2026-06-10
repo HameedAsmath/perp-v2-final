@@ -5,6 +5,8 @@ import {
   persistMakerFill,
   persistPlacedOrder,
 } from "../db/orders";
+import { persistTradeFill } from "../db/fills";
+import { getMarket } from "./markets";
 
 export type Side = "long" | "short";
 export type OrderType = "limit" | "market";
@@ -285,6 +287,7 @@ export async function placeOrder(
 ): Promise<OrderResponse> {
   const orderId = crypto.randomUUID();
   const user = getUser(input.userId);
+  const market = await getMarket(input.symbol);
   const leverage = input.leverage ?? 1;
   const fills: Fill[] = [];
 
@@ -306,10 +309,23 @@ export async function placeOrder(
       );
     }
   }
-  // Step 2: pre-trade margin check
+  // Step 2: pre-trade margin check and order size check and leverage check
   if (user.availableBalance < initialLock) {
     await persistRejectedOrder(orderId, input, "insufficient margin");
     return rejected(orderId, input.quantity, "insufficient margin");
+  }
+
+  if (
+    input.quantity < market.minOrderSize ||
+    input.quantity > market.maxOrderSize
+  ) {
+    await persistRejectedOrder(orderId, input, "invalid order size");
+    return rejected(orderId, input.quantity, "invalid order size");
+  }
+
+  if (leverage > market.maxLeverage) {
+    await persistRejectedOrder(orderId, input, "leverage exceeds max");
+    return rejected(orderId, input.quantity, "leverage exceeds max");
   }
 
   // Step 3: lock initial margin
@@ -354,6 +370,18 @@ export async function placeOrder(
     });
     applyMakerFill(maker, fillQty, fillPrice); // update maker book + maker user margin + maker position
     await persistMakerFill(maker.orderId, maker.quantity, fillQty); // change the orders table
+    await persistTradeFill({
+      // add it in the fills table
+      symbol: input.symbol,
+      price: fillPrice,
+      quantity: fillQty,
+      makerOrderId: maker.orderId,
+      makerUserId: maker.userId,
+      makerSide: maker.side,
+      takerOrderId: orderId, // incoming placed order
+      takerUserId: input.userId,
+      takerSide: input.side,
+    });
     applyTakerFill(input, fillQty, fillPrice, fillMargin);
     marginUsed += fillMargin;
     remaining -= fillQty;

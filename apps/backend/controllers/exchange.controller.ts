@@ -1,6 +1,12 @@
 import type { Request, Response } from "express";
 import { loopback } from "../redis/loopback";
-import { prisma, serializeOrder } from "database";
+import {
+  prisma,
+  serializeOrder,
+  serializeFill,
+  listActiveMarkets,
+  serializeMarket,
+} from "database";
 
 export async function resetExchange(req: Request, res: Response) {
   try {
@@ -8,20 +14,6 @@ export async function resetExchange(req: Request, res: Response) {
     res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ error: "Failed to reset exchange" });
-  }
-}
-
-export async function createUser(req: Request, res: Response) {
-  const { userId, initialBalance } = req.body;
-  try {
-    const data = await loopback({
-      messageType: "create_user",
-      userId,
-      initialBalance: initialBalance.toString(),
-    });
-    res.status(200).json(data);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to create user" });
   }
 }
 
@@ -163,4 +155,21 @@ export async function getOrderById(req: Request, res: Response) {
   });
   if (!order) return res.status(404).json({ error: "order not found" });
   res.json({ order: serializeOrder(order) });
+}
+
+export async function getMyFills(req: Request, res: Response) {
+  const userId = req.userId;
+  if (!userId) return res.status(401).json({ error: "unauthorized" });
+
+  const fills = await prisma.fill.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  res.json({ fills: fills.map(serializeFill) });
+}
+
+export async function getMarkets(_req: Request, res: Response) {
+  const markets = await listActiveMarkets();
+  res.json({ markets: markets.map(serializeMarket) });
 }

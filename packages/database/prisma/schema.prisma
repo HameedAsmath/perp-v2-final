@@ -54,12 +54,12 @@ model Market {
   quoteCurrency String
   imageUrl      String?
 
-  tickSize              BigInt
-  minOrderSize          BigInt // min order quantity
-  maxOrderSize          BigInt // max order quantity
+  tickSize              Float
+  minOrderSize          Float // min order quantity
+  maxOrderSize          Float // max order quantity
   maxLeverage           Int
-  makerFeeRate          BigInt
-  takerFeeRate          BigInt
+  makerFeeRate          Float
+  takerFeeRate          Float
   maintenanceMarginRate Int // minimum balance to maintain otherwise it get's liquidated like 0.5%
   initialMarginRate     Int // minimum balance to open an order like 1%
   isActive              Boolean  @default(true)
@@ -104,9 +104,9 @@ model Fill {
   marketId  String
   side      OrderSide
   role      FillRole // maker or taker
-  quantity  BigInt
-  price     BigInt
-  fee       BigInt
+  quantity  Float
+  price     Float
+  fee       Float     @default(0)
   createdAt DateTime  @default(now())
 
   order  Order  @relation(fields: [orderId], references: [id])

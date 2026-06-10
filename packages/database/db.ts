@@ -10,3 +10,5 @@ export const prisma = new PrismaClient({
 });
 
 export * from "./utils/orders";
+export * from "./utils/fills";
+export * from "./utils/markets";

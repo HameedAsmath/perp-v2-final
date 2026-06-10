@@ -8,6 +8,7 @@ import { getInsuranceFundView } from "../state/insurance";
 import { getAdlEventsView } from "../state/adl";
 import { getPositionsView } from "../state/positions";
 import { resetOrders } from "../db/orders";
+import { resetFills } from "../db/fills";
 
 export async function dispatch(
   message: ToEngine & { correlationId: string },
@@ -16,6 +17,7 @@ export async function dispatch(
     case "reset":
       resetAll();
       await resetOrders();
+      await resetFills();
       return {
         ok: true,
         data: { ok: true },

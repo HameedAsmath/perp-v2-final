@@ -1,6 +1,5 @@
 import { Router } from "express";
 import {
-  createUser,
   placeOrder,
   resetExchange,
   getUserBalance,
@@ -12,12 +11,15 @@ import {
   getOrderBook,
   getOrders,
   getOrderById,
+  getMyFills,
+  getMarkets,
 } from "../controllers/exchange.controller";
 import { authMiddleware } from "../middleware/auth";
 
 const exchangeRouter = Router();
 
 exchangeRouter.get("/orderbook/:symbol", getOrderBook); // orderbook is public
+exchangeRouter.get("/markets", getMarkets); // markets is public
 
 exchangeRouter.post("/reset", authMiddleware, resetExchange);
 exchangeRouter.post("/orders", authMiddleware, placeOrder);
@@ -30,5 +32,6 @@ exchangeRouter.post("/funding", authMiddleware, applyFunding);
 exchangeRouter.get("/insurance-fund/:symbol", authMiddleware, getInsuranceFund);
 exchangeRouter.get("/adl-events", authMiddleware, getAdlEvents);
 exchangeRouter.get("/orderbook/:symbol", authMiddleware, getOrderBook);
+exchangeRouter.get("/me/fills", authMiddleware, getMyFills);
 
 export default exchangeRouter;

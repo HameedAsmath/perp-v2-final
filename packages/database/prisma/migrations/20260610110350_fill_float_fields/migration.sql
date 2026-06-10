@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Fill" ALTER COLUMN "fee" SET DEFAULT 0;
