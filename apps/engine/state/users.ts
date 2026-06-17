@@ -50,3 +50,13 @@ export function getBalanceView(userId: string) {
 export function requiredMargin(price: number, qty: number, leverage: number) {
   return (price * qty) / leverage;
 }
+
+export function exportUsers(): Record<string, UserAccount> {
+  return Object.fromEntries(users);
+}
+export function importUsers(data: Record<string, UserAccount>) {
+  users.clear();
+  for (const [id, account] of Object.entries(data)) {
+    users.set(id, account);
+  }
+}

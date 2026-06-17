@@ -1,6 +1,6 @@
 import { getAllPositionsForSymbol } from "../state/positions";
 import { getUser } from "../state/users";
-import { runLiquidations } from "./liquidation";
+import { runLiquidations, type LiquidationEvent } from "./liquidation";
 
 export type FundingPayment = {
   userId: string;
@@ -12,14 +12,14 @@ export type FundingResult = {
   symbol: string;
   rate: number;
   payments: FundingPayment[];
-  liquidations: ReturnType<typeof runLiquidations>;
+  liquidations: LiquidationEvent[];
 };
 
-export function applyFunding(
+export async function applyFunding(
   symbol: string,
   rate: number,
   runLiquidation: boolean,
-): FundingResult {
+): Promise<FundingResult> {
   const payments: FundingPayment[] = [];
 
   for (const { userId, position } of getAllPositionsForSymbol(symbol)) {
@@ -38,7 +38,7 @@ export function applyFunding(
     payments.push({ userId, side: position.side, amount });
   }
 
-  const liquidations = runLiquidation ? runLiquidations(symbol) : [];
+  const liquidations = runLiquidation ? await runLiquidations(symbol) : [];
 
   return { symbol, rate, payments, liquidations };
 }

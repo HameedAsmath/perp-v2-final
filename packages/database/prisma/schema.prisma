@@ -43,8 +43,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders Order[]
-  fills  Fill[]
+  orders       Order[]
+  fills        Fill[]
+  liquidations Liquidation[]
+  adlEvents    AdlEvent[]
 }
 
 model Market {
@@ -65,8 +67,12 @@ model Market {
   isActive              Boolean  @default(true)
   createdAt             DateTime @default(now())
 
-  orders Order[]
-  fills  Fill[]
+  orders                 Order[]
+  fills                  Fill[]
+  insuranceFund          InsuranceFund?
+  insuranceLedgerEntries InsuranceLedgerEntry[]
+  liquidations           Liquidation[]
+  adlEvents              AdlEvent[]
 }
 
 model Order {
@@ -114,6 +120,63 @@ model Fill {
   market Market @relation(fields: [marketId], references: [id])
 
   @@index([orderId])
+  @@index([userId])
+  @@index([marketId])
+}
+
+model InsuranceFund {
+  id        String   @id @default(uuid())
+  marketId  String   @unique
+  balance   Float    @default(0)
+  updatedAt DateTime @updatedAt
+
+  market Market                 @relation(fields: [marketId], references: [id])
+  ledger InsuranceLedgerEntry[]
+}
+
+model InsuranceLedgerEntry {
+  id        String   @id @default(uuid())
+  marketId  String
+  amount    Float // + credit, − debit
+  reason    String
+  userId    String?
+  createdAt DateTime @default(now())
+
+  market Market        @relation(fields: [marketId], references: [id])
+  fund   InsuranceFund @relation(fields: [marketId], references: [marketId], map: "ledger_fund_market")
+}
+
+model Liquidation {
+  id         String    @id @default(uuid())
+  userId     String
+  marketId   String
+  side       OrderSide
+  quantity   Float
+  entryPrice Float
+  markPrice  Float
+  margin     Float
+  settlement Float
+  reason     String
+  createdAt  DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  market Market @relation(fields: [marketId], references: [id])
+
+  @@index([userId])
+  @@index([marketId])
+}
+
+model AdlEvent {
+  id              String   @id @default(uuid())
+  userId          String
+  marketId        String
+  reducedQuantity Float
+  bankruptcyPrice Float
+  createdAt       DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  market Market @relation(fields: [marketId], references: [id])
+
   @@index([userId])
   @@index([marketId])
 }

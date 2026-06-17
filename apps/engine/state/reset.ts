@@ -1,5 +1,3 @@
-import { resetAdlEvents } from "./adl";
-import { resetInsurance } from "./insurance";
 import { resetMarkets } from "./markets";
 import { resetMarkPrices } from "./markPrices";
 import { resetOrderbook } from "./orderbook";
@@ -11,7 +9,5 @@ export function resetAll() {
   resetOrderbook();
   resetPositions();
   resetMarkPrices();
-  resetInsurance();
-  resetAdlEvents();
   resetMarkets();
 }

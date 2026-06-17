@@ -12,3 +12,6 @@ export const prisma = new PrismaClient({
 export * from "./utils/orders";
 export * from "./utils/fills";
 export * from "./utils/markets";
+export * from "./utils/insurance";
+export * from "./utils/liquidations";
+export * from "./utils/adl";

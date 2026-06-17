@@ -6,6 +6,10 @@ import {
   serializeFill,
   listActiveMarkets,
   serializeMarket,
+  getInsuranceFundBySlug,
+  serializeInsuranceFund,
+  serializeAdlEvent,
+  serializeLiquidation,
 } from "database";
 
 export async function resetExchange(req: Request, res: Response) {
@@ -101,27 +105,6 @@ export async function applyFunding(req: Request, res: Response) {
   }
 }
 
-export async function getInsuranceFund(req: Request, res: Response) {
-  try {
-    const data = await loopback({
-      messageType: "get_insurance_fund",
-      symbol: req.params.symbol as string,
-    });
-    res.status(200).json(data);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to get insurance fund" });
-  }
-}
-
-export async function getAdlEvents(_req: Request, res: Response) {
-  try {
-    const data = await loopback({ messageType: "get_adl_events" });
-    res.status(200).json(data);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to get ADL events" });
-  }
-}
-
 export async function getOrderBook(req: Request, res: Response) {
   const symbol = req.params.symbol as string;
   try {
@@ -172,4 +155,26 @@ export async function getMyFills(req: Request, res: Response) {
 export async function getMarkets(_req: Request, res: Response) {
   const markets = await listActiveMarkets();
   res.json({ markets: markets.map(serializeMarket) });
+}
+
+export async function getInsuranceFund(req: Request, res: Response) {
+  const slug = req.params.symbol as string;
+  const fund = await getInsuranceFundBySlug(slug);
+  if (!fund) return res.json({ symbol: slug, balance: 0 });
+  res.json(serializeInsuranceFund(fund, fund.market.slug));
+}
+export async function getAdlEvents(req: Request, res: Response) {
+  const events = await prisma.adlEvent.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+  res.json({ events: events.map(serializeAdlEvent) });
+}
+export async function getLiquidations(req: Request, res: Response) {
+  const userId = req.userId;
+  const where = userId ? { userId } : {};
+  const rows = await prisma.liquidation.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+  });
+  res.json({ liquidations: rows.map(serializeLiquidation) });
 }

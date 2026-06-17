@@ -4,11 +4,12 @@ import { createUser, getBalanceView } from "../state/users";
 import { getOrderBookView, placeOrder } from "../state/orderbook";
 import { updateMarkPrice } from "./markPrice";
 import { applyFunding } from "./funding";
-import { getInsuranceFundView } from "../state/insurance";
-import { getAdlEventsView } from "../state/adl";
 import { getPositionsView } from "../state/positions";
 import { resetOrders } from "../db/orders";
 import { resetFills } from "../db/fills";
+import { resetAdlEvents } from "../db/adl";
+import { resetLiquidations } from "../db/liquidations";
+import { resetInsurance } from "../db/insurance";
 
 export async function dispatch(
   message: ToEngine & { correlationId: string },
@@ -16,8 +17,11 @@ export async function dispatch(
   switch (message.messageType) {
     case "reset":
       resetAll();
-      await resetOrders();
+      await resetAdlEvents();
+      await resetLiquidations();
+      await resetInsurance();
       await resetFills();
+      await resetOrders();
       return {
         ok: true,
         data: { ok: true },
@@ -50,7 +54,7 @@ export async function dispatch(
     case "update_mark_price":
       return {
         ok: true,
-        data: updateMarkPrice(
+        data: await updateMarkPrice(
           message.symbol,
           Number(message.markPrice),
           message.runLiquidation === "true",
@@ -59,22 +63,22 @@ export async function dispatch(
     case "apply_funding":
       return {
         ok: true,
-        data: applyFunding(
+        data: await applyFunding(
           message.symbol,
           Number(message.rate),
           message.runLiquidation === "true",
         ),
       };
-    case "get_insurance_fund":
-      return {
-        ok: true,
-        data: getInsuranceFundView(message.symbol),
-      };
-    case "get_adl_events":
-      return {
-        ok: true,
-        data: getAdlEventsView(),
-      };
+    // case "get_insurance_fund":
+    //   return {
+    //     ok: true,
+    //     data: getInsuranceFundView(message.symbol),
+    //   };
+    // case "get_adl_events":
+    //   return {
+    //     ok: true,
+    //     data: getAdlEventsView(),
+    //   };
     case "get_orderbook":
       return {
         ok: true,

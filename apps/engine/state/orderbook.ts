@@ -416,3 +416,17 @@ export async function placeOrder(
   await persistPlacedOrder(orderId, input, response);
   return response;
 }
+
+// helpers
+export function exportOrderbook() {
+  return Object.fromEntries(orderbook);
+}
+
+export function importOrderbook(
+  data: Record<string, { bids: RestingOrder[]; asks: RestingOrder[] }>,
+) {
+  orderbook.clear();
+  for (const [symbol, book] of Object.entries(data)) {
+    orderbook.set(symbol, { bids: [...book.bids], asks: [...book.asks] });
+  }
+}

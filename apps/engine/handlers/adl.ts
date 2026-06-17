@@ -1,7 +1,7 @@
-import { appendAdlEvent } from "../state/adl";
 import { getAllPositionsForSymbol, removePosition } from "../state/positions";
-import { getUser, requiredMargin } from "../state/users";
+import { getUser } from "../state/users";
 import type { Position } from "../state/positions";
+import { persistAdlEvent } from "../db/adl";
 
 function unrealizedPnl(position: Position, mark: number): number {
   return position.side === "long"
@@ -10,12 +10,12 @@ function unrealizedPnl(position: Position, mark: number): number {
 }
 
 /** Reduce profitable opposite-side positions until shortfall covered */
-export function runAdl(
+export async function runAdl(
   symbol: string,
   shortfall: number,
   bankruptcyPrice: number,
   bankruptSide: "long" | "short",
-): void {
+) {
   const targetSide = bankruptSide === "long" ? "short" : "long";
 
   const candidates = getAllPositionsForSymbol(symbol)
@@ -42,7 +42,7 @@ export function runAdl(
     const reduceQty = Math.min(position.quantity, remaining / profitPerUnit);
 
     applyAdlReduction(userId, position, reduceQty, bankruptcyPrice);
-    appendAdlEvent({
+    await persistAdlEvent({
       userId,
       symbol,
       reducedQuantity: reduceQty,

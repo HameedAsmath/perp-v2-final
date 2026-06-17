@@ -4,8 +4,9 @@ import type { Position } from "../state/positions";
 import { runAdl } from "../handlers/adl";
 import { getUser } from "../state/users";
 import { removePosition } from "../state/positions";
-import { debitInsurance } from "../state/insurance";
-
+// import { debitInsurance } from "../state/insurance";
+import { persistLiquidation } from "../db/liquidations";
+import { debitInsurance } from "../db/insurance";
 const MAINTENANCE_MARGIN_RATE = 0.005;
 
 export type LiquidationEvent = {
@@ -34,11 +35,11 @@ function shouldLiquidate(
   return markPrice >= liqPrice;
 }
 
-function liquidateUserPosition(
+async function liquidateUserPosition(
   userId: string,
   position: Position,
   mark: number,
-): void {
+) {
   const user = getUser(userId);
 
   // PnL if we close at mark
@@ -55,16 +56,31 @@ function liquidateUserPosition(
     user.availableBalance += settlement; // Healthy liquidation: user keeps proceeds
     return;
   }
+  await persistLiquidation({
+    // entry in liquidation table
+    userId,
+    symbol: position.symbol,
+    position,
+    markPrice: mark,
+    settlement,
+    reason: "maintenance_margin",
+  });
+
   // Bankrupt: user cannot go negative
   const deficit = -settlement;
   user.availableBalance = Math.max(0, user.availableBalance + settlement);
-  const shortfall = debitInsurance(position.symbol, deficit);
+  const shortfall = await debitInsurance(
+    position.symbol,
+    deficit,
+    "liquidation_deficit",
+    userId,
+  );
   if (shortfall > 0) {
-    runAdl(position.symbol, shortfall, mark, position.side);
+    await runAdl(position.symbol, shortfall, mark, position.side);
   }
 }
 
-export function runLiquidations(symbol: string): LiquidationEvent[] {
+export async function runLiquidations(symbol: string) {
   const mark = getMarkPrice(symbol);
   const events: LiquidationEvent[] = [];
   // Loop every open position for this symbol (you need getAllPositionsForSymbol(symbol))
@@ -72,7 +88,7 @@ export function runLiquidations(symbol: string): LiquidationEvent[] {
     const liq = liquidationPrice(position);
     if (!shouldLiquidate(position.side, mark, liq)) continue;
     // Close position: release margin, realize PnL at mark, clear position
-    liquidateUserPosition(userId, position, mark);
+    await liquidateUserPosition(userId, position, mark);
     events.push({
       userId,
       symbol,

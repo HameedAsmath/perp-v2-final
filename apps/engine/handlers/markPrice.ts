@@ -1,20 +1,20 @@
 import { setMarkPrice } from "../state/markPrices";
-import { runLiquidations } from "./liquidation";
+import { runLiquidations, type LiquidationEvent } from "./liquidation";
 
 export type MarkPriceResult = {
   symbol: string;
   markPrice: number;
-  liquidations: ReturnType<typeof runLiquidations>;
+  liquidations: LiquidationEvent[];
 };
 
-export function updateMarkPrice(
+export async function updateMarkPrice(
   symbol: string,
   markPrice: number,
   runLiquidation: boolean,
-): MarkPriceResult {
+): Promise<MarkPriceResult> {
   setMarkPrice(symbol, markPrice);
 
-  const liquidations = runLiquidation ? runLiquidations(symbol) : [];
+  const liquidations = runLiquidation ? await runLiquidations(symbol) : [];
 
   return { symbol, markPrice, liquidations };
 }

@@ -110,3 +110,21 @@ export function getPositionEquityTotals(
 
   return { positionMargin, unrealizedPnl };
 }
+
+// helpers
+export function exportPositions(): Record<string, Record<string, Position>> {
+  const out: Record<string, Record<string, Position>> = {};
+  for (const [userId, bySymbol] of positions) {
+    out[userId] = Object.fromEntries(bySymbol);
+  }
+  return out;
+}
+
+export function importPositions(
+  data: Record<string, Record<string, Position>>,
+) {
+  positions.clear();
+  for (const [userId, bySymbol] of Object.entries(data)) {
+    positions.set(userId, new Map(Object.entries(bySymbol)));
+  }
+}
